@@ -1,0 +1,47 @@
+{
+    "peers":[
+        {
+            "province": "BeiJing",
+            "publickey": "565bedf8c62330f87d7568609242d90db5ab01118d2c517e370c7c3fe1413377615ba1f05e85e15d8b5c15ce5563d02081101ba639efe021191d7fcd40b7f953",
+            "address": "192.168.1.11",
+            "rpcport": "10010",
+            "protocol": "tcp"
+        },
+        {
+            "province": "ShangHai",
+            "publickey": "74ebc48704b6287162e2729189eb3014c693e2459a2bccbcc38952f229dafc14b8f66f39b9b5409a96b028281f2b51ce02b2da365bfc5e7aa3351696c8d3d737",
+            "address": "192.168.1.22",
+            "rpcport": "10010",
+            "protocol": "tcp"
+        },
+        {
+            "province": "GuiZhou",
+            "publickey": "65de93e3f30f26e52c0aace28d348a357bcc78ff1c798ec214b5c34008ad035479c84ee43456ca47851f725cef9e558b34c6ae5d78bd64d613575e15c0fa1506",
+            "address": "",
+            "rpcport": "",
+            "protocol": ""
+        },
+        {
+            "province": "JiangXi",
+            "publickey": "437334d5fc7fd19367c1703bdc20cb9d171e9564c192bfaf70a1d62eb353d817a1b6a6c9cf5639292bebe43462b71295257d4d45a60e354345b8b09dd7b0fb66",
+            "address": "",
+            "rpcport": "",
+            "protocol": ""
+        },
+        {
+            "province": "ZheJiang",
+            "publickey": "e9ed789844407ee625cb7147f58e21b470834b726afd9af6c13e6825f4eca1c826a0176435ebf18292e6368f3c7a622afe19083a310c0c32da0e38ec8a71a9c6",
+            "address": "",
+            "rpcport": "",
+            "protocol": ""
+        },
+        {
+            "province": "XiZang",
+            "publickey": "b04954b39a04ca9b4c7189b5b1d5c88bd84253c6aefc3d00d576d2e48f006b3778ae0f396866f30fdead396eaffc1b054ba5db06f4aef124079c84e0f7abec56",
+            "address": "",
+            "rpcport": "",
+            "protocol": ""
+        }
+    ]
+}
+

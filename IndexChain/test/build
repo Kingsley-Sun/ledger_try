@@ -1,0 +1,1 @@
+go build -o $fuck/IndexChain/test/SuperNode ledger_try/IndexChain
