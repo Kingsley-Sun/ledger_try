@@ -11,7 +11,7 @@ type CLI struct{}
 
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println("  createsuper -config config.json")
+	fmt.Println("  createsuper -config config.json [-keystone keystone]")
 	fmt.Println("  runsuper -node InitialNode.config -peers Peers.json")
 }
 
@@ -28,6 +28,7 @@ func (cli *CLI) Run() {
 	//Start a command process
 	createSuperCmd := flag.NewFlagSet("createsuper", flag.ExitOnError)
 	createSuperConfig := createSuperCmd.String("config", "", "Config file for create a super node")
+	createSuperKey := createSuperCmd.String("keystone","","KeyStone for create a super node")
 
 	//Start a guard process
 	runSuperCmd := flag.NewFlagSet("runsuper", flag.ExitOnError)
@@ -55,7 +56,7 @@ func (cli *CLI) Run() {
 			createSuperCmd.Usage()
 			os.Exit(1)
 		}
-		err := CreateSuperNode(*createSuperConfig)
+		err := CreateSuperNode(*createSuperConfig,*createSuperKey)
 		if err != nil {
 			log.Panic(err)
 		}

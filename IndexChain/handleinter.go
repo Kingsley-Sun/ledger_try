@@ -75,8 +75,9 @@ func (s *SuperNode) handle_getblock(m *Message, b *Blockchain, ip string) {
 func (s *SuperNode) handle_sendblock(m *Message, b *Blockchain) {
 	//recieve a block check it and
 	//add it to the database
-	block := *DeserializeBlock(m.Parameters)
-	if block.VerifyMBlock() == false {
+	block := DeserializeBlock(m.Parameters)
+	if block.VerifyMBlock(s.Peers.Superpeers) == false {
+		fmt.Println("[*]Handle_sendblock VerifMBlock Failed")
 		return
 	}
 	b.Mutex.Lock()
@@ -84,7 +85,7 @@ func (s *SuperNode) handle_sendblock(m *Message, b *Blockchain) {
 		return
 	}
 	//fmt.Println("[~]Add A Block to Mempool")
-	b.AddToMempool(&block)
+	b.AddToMempool(block)
 	b.Mutex.Unlock()
 }
 
@@ -143,19 +144,19 @@ func (s *SuperNode) handle_sendonlinepeers(m *Message, ip string) {
 		//fmt.Println("[~]This is ", onpeer.Province)
 		//fmt.Println("[~]Before IsLegal")
 		if s.Peers.IsLegal(hex.EncodeToString(onpeer.PublicKey), onpeer.Province) == false {
-			fmt.Println("[*]" + onpeer.Province + " s.Peers.IsLegal failed")
+			//fmt.Println("[~]" + onpeer.Province + " s.Peers.IsLegal failed")
 			continue
 		}
 
 		//fmt.Println("[~]Before Contains")
 		if Contains(s.Peers.OnlinePeers, onpeer) == true {
-			fmt.Println("[*]" + onpeer.Province + " Contains failed")
+			//fmt.Println("[~]" + onpeer.Province + " Contains failed")
 			continue
 		}
 
 		//fmt.Println("[~]Before s.Peers.IsAlive")
 		if s.Peers.IsAlive(onpeer) == false {
-			fmt.Println("[*]" + onpeer.Province + " IsAlive failed")
+			//fmt.Println("[~]" + onpeer.Province + " IsAlive failed")
 			continue
 		}
 

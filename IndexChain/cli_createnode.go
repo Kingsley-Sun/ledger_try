@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"crypto/elliptic"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 )
 
-func CreateSuperNode(configfile string) error {
+func CreateSuperNode(configfile string,keystone string) error {
 	//information
 	s := SuperNodeConfig{}
 	data_bytes, err := ioutil.ReadFile(configfile)
@@ -20,25 +24,41 @@ func CreateSuperNode(configfile string) error {
 	}
 
 	//ca
-	private, pub := newAccount()
-	s.PrivateKey = private
-	s.PublicKey = pub
 	s.Mempool = &Mempool{}
+	if keystone == "" {
+		//Create A new Peer
+		private, pub := newAccount()
+		s.PrivateKey = private
+		s.PublicKey = pub
+	}else {
+		if _, err := os.Stat(keystone); os.IsNotExist(err) {
+			return err
+		}
+		nodeContent, err := ioutil.ReadFile(keystone)
+		if err != nil {
+			return err
+		}
+
+		var keystone KeyStone
+		gob.RegisterName("Curve", elliptic.P256())
+		decoder := gob.NewDecoder(bytes.NewReader(nodeContent))
+		err = decoder.Decode(&keystone)
+		if err != nil {
+			return err
+		}
+
+		s.PrivateKey = keystone.PrivateKey
+		s.PublicKey = keystone.PublicKey
+	}
 
 	//Persistence
-	node := &SuperNode{
-		Config: &s,
-	}
-	node.SaveToFile()
-	fmt.Println("Your Province is : ", node.Config.Province)
-	fmt.Println("Your Public key is : ")
-	fmt.Println(hex.EncodeToString(node.Config.PublicKey))
+	s.SaveToFile()
 
-	/*
-		sss := hex.EncodeToString(node.Config.PublicKey)
-		pubbytes,_ := hex.DecodeString(sss)
-		fmt.Println(pubbytes)
-	*/
+	fmt.Println("Your Province is : ", s.Province)
+	fmt.Println("Your Public key is : ")
+	fmt.Println(hex.EncodeToString(s.PublicKey))
+	fmt.Println("Your Private key is : ")
+	fmt.Println(s.PrivateKey.D.Bytes())
 
 	fmt.Println("Gather it with other province to peers.config")
 	return nil

@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -17,7 +16,7 @@ type SuperNodeInBlock struct {
 
 type Blockheader struct {
 	Miner *SuperNodeInBlock
-	//hash of Sig Prevhash Timestamp Height
+	//hash of Sig and Prevhash
 	Hash [20]byte
 	//sigature for NotesHash
 	Sig       []byte
@@ -31,23 +30,6 @@ type Block struct {
 	Header *Blockheader
 	//information
 	Notes []*Note
-}
-
-func (block *Block)Verify(peer *Peer) bool {
-	if block.Header.Miner.Province != peer.Province {
-		return false
-	}
-	if hex.EncodeToString(block.Header.Miner.PublicKey) != hex.EncodeToString(peer.PublicKey) {
-		return false
-	}
-	//TODO
-	return true
-}
-
-func (block *Block)VerifyMBlock() bool {
-	//Used For Sendblock Message
-	//TODO
-	return true
 }
 
 // Serialize a block to stream
@@ -71,7 +53,7 @@ func DeserializeBlock(d []byte) *Block {
 	decoder := gob.NewDecoder(bytes.NewReader(d))
 	err := decoder.Decode(&block)
 	if err != nil {
-		log.Panic(err)
+		//log.Panic(err)
 		return nil
 	}
 
@@ -102,7 +84,7 @@ func NewBlock(s *SuperNode, previous *Block) *Block {
 	notes := s.Config.Mempool.GetBlockNotes()
 	s.Mutex.Unlock()
 
-	noteshash := s.Config.Mempool.CalNotesHash(notes)
+	noteshash := CalNotesHash(notes)
 	signature, err := Signature(s.Config.PrivateKey,noteshash[:])
 	if err != nil {
 		return nil
@@ -184,4 +166,81 @@ func IsSameBlock(b1 Block,b2 Block) bool {
 	return true
 }
 
+func (block *Block)Verify(peer *Peer) bool {
+	//Used For csendblock Message
+
+	//Verify header
+	header := block.Header
+
+	//Verify Noteshash
+	noteshash := CalNotesHash(block.Notes)
+	if hex.EncodeToString(noteshash[:]) != hex.EncodeToString(header.Noteshash[:]){
+		fmt.Println("[*]Recieve a consensus block noteshash doesn't match")
+		return false
+	}
+
+	if block.Header.Miner.Province != peer.Province {
+		fmt.Println("[*]Recieve a consensus block Province doesn't match")
+		return false
+	}
+	if hex.EncodeToString(block.Header.Miner.PublicKey) != hex.EncodeToString(peer.PublicKey) {
+		fmt.Println("[*]Recieve a consensus block PublickKey doesn't match")
+		return false
+	}
+
+	mess := noteshash[:]
+	if VerifySig(header.Miner.PublicKey,header.Sig,mess) == false {
+		fmt.Println("[*]Recieve a consensus block VerifySig doesn't match")
+		return false
+	}
+
+	blockhash := CalBlockHash(header.Sig,header.Prevhash[:])
+	if hex.EncodeToString(blockhash[:]) != hex.EncodeToString(header.Hash[:]) {
+		fmt.Println("[*]Recieve a consensus block BlockHash doesn't match")
+		return false
+	}
+
+	return true
+}
+
+func (block *Block)VerifyMBlock(peers []*Peer) bool {
+	//Used For Sendblock Message
+
+	//Verify header
+	header := block.Header
+
+	//Verify Noteshash
+	noteshash := CalNotesHash(block.Notes)
+	if hex.EncodeToString(noteshash[:]) != hex.EncodeToString(header.Noteshash[:]){
+		for _,n := range block.Notes {
+			fmt.Println(n.HashID)
+			fmt.Println(n.Timestamp)
+		}
+		return false
+	}
+
+	peer := &Peer{
+		Province:  header.Miner.Province,
+		PublicKey: header.Miner.PublicKey,
+	}
+
+	if Contains(peers,peer) == false {
+		fmt.Println("[*]Recieve a block Contains doesn't match")
+		return false
+	}
+
+	mess := noteshash[:]
+	if VerifySig(header.Miner.PublicKey,header.Sig,mess) == false {
+		fmt.Println("[*]Recieve a block VerifySig doesn't match")
+		return false
+	}
+
+	blockhash := CalBlockHash(header.Sig,header.Prevhash[:])
+	if hex.EncodeToString(blockhash[:]) != hex.EncodeToString(header.Hash[:]) {
+		fmt.Println("[*]Recieve a block Blockhash doesn't match")
+		return  false
+	}
+
+	return true
+}
 

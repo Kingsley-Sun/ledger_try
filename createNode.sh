@@ -1,1 +1,1 @@
-./SuperNode createsuper -config config.json
+./SuperNode createsuper -config config.json -keystone keystone

@@ -77,9 +77,9 @@ func (bc *Blockchain) AddToMempool(block *Block) {
 	}
 }
 
-//this function only update dababase
+//this function only update dabebase
 //do not apply any verification
-func (bc *Blockchain) UpdateDatabase(block *Block) {
+func (bc *Blockchain) UpdateDatabase(block *Block) error{
 	//do not mutex here
 	//sequenced update only
 	bytesBuffer := bytes.NewBuffer([]byte{})
@@ -109,10 +109,11 @@ func (bc *Blockchain) UpdateDatabase(block *Block) {
 	})
 	//after updating database successfully
 	//update the blockchain.LatestHeight
-	bc.Latesheight = block.Header.Height
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
+	bc.Latesheight = block.Header.Height
+	return nil
 }
 
 func (bc *Blockchain) GetNotesByBlockHeight(height int) ([]*Note, error) {
@@ -135,6 +136,9 @@ func (bc *Blockchain) GetBlockByHeight(height int) (*Block, error) {
 			return errors.New("Block is not found.")
 		}
 		block = *DeserializeBlock(blockdata)
+		if &block == nil {
+			return errors.New("Block DeserializeBlock Failed")
+		}
 		return nil
 	})
 	if err != nil {

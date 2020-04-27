@@ -14,15 +14,7 @@ type Mempool struct {
 	NotesMap map[string]*Note
 }
 
-func (m *Mempool) CalNotesHash(notes []*Note) [20]byte {
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(notes)
-	if err != nil {
-		log.Panic(err)
-	}
-	return sha1.Sum(result.Bytes())
-}
+
 func (m *Mempool) AddNote(note *Note) {
 	//be careful of memory lea
 	fmt.Println("[*]Add a New Note to Mempool")
@@ -55,6 +47,20 @@ func (m *Mempool) HasNote(hash string) bool {
 
 func (m *Mempool) DeleteNote(hash string) {
 	delete(m.NotesMap, hash)
+}
+
+func CalNotesHash(notes []*Note) [20]byte {
+	if len(notes) == 0 {
+		return [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	}
+
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(notes)
+	if err != nil {
+		log.Panic(err)
+	}
+	return sha1.Sum(result.Bytes())
 }
 
 func (m *Mempool) PrintMempool() {

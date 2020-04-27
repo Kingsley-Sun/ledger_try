@@ -112,7 +112,10 @@ func (s *SuperNode) Routine(bc *Blockchain, cc <-chan bool, wg *sync.WaitGroup) 
 
 				//Update the BlockChain
 				bc.Mutex.Lock()
-				bc.UpdateDatabase(s.ConsensusBlock)
+				err := bc.UpdateDatabase(s.ConsensusBlock)
+				if err != nil {
+					goto RoundEnd
+				}
 				bc.Mutex.Unlock()
 
 				latesnotes, _ := bc.GetNotesByBlockHeight(bc.GetBestHeight())
@@ -127,9 +130,7 @@ func (s *SuperNode) Routine(bc *Blockchain, cc <-chan bool, wg *sync.WaitGroup) 
 				}
 
 			}
-
 			//fmt.Println("[~]~~~~ Sync4 over ~~~~")
-
 		RoundEnd:
 			go Sync(c,5)
 			<-c

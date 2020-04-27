@@ -16,6 +16,7 @@ func (c *CLI) RunSuper(nodeconfig string, peersconfig string) {
 	if err != nil {
 		log.Panic(err)
 	}
+	//fmt.Println(hex.EncodeToString(superNode.Config.PublicKey))
 	superNode.Run()
 }
 
@@ -78,7 +79,7 @@ func (s *SuperNode) Run() {
 	// wg.Wait()
 
 	//Save blockchain state and mempool
-	s.SaveToFile()
+	s.Config.SaveToFile()
 
 	fmt.Println("Exit Successfully!")
 }
@@ -97,12 +98,30 @@ func (s *SuperNode) SyncToLateset(bc *Blockchain, c <-chan bool, wg *sync.WaitGr
 				if bc.Mempool[nowheight+1] == nil || bc.Mempool[nowheight+1].count < verifyMin {
 					s.Peers.SendMess_GetBlock(s.Config, nowheight+1)
 					break
-				} else {
+				}else {
+					//Apply prev hash Check
+					if bc.Latesheight == 0 {
+						sp1 := hex.EncodeToString(bc.Mempool[1].block.Header.Prevhash[:])
+						p2 := [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+						sp2 := hex.EncodeToString(p2[:])
+						if sp1 != sp2 {
+							delete(bc.Mempool,1)
+							continue
+						}
+					}else {
+						prevblock,_ := bc.GetBlockByHeight(nowheight)
+						if hex.EncodeToString(bc.Mempool[nowheight+1].block.Header.Prevhash[:]) != hex.EncodeToString(prevblock.Header.Hash[:]) {
+							delete(bc.Mempool,nowheight+1)
+							continue
+						}
+					}
 					bc.Mutex.Lock()
-					bc.UpdateDatabase(bc.Mempool[nowheight+1].block)
+					err := bc.UpdateDatabase(bc.Mempool[nowheight+1].block)
 					bc.Mutex.Unlock()
 					delete(bc.Mempool, nowheight+1)
-
+					if err != nil {
+						continue
+					}
 					//remove the local note in the block
 					latesnotes, _ := bc.GetNotesByBlockHeight(bc.GetBestHeight())
 					for _, note := range latesnotes {

@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"os"
 	"sync"
 )
@@ -43,6 +44,11 @@ type SuperNodeConfig struct {
 	Province string `json:"province"`
 	IpAddr   string `json:"address"`
 	RpcPort  string `json:"rpcport"`
+}
+
+type KeyStone struct {
+	PrivateKey ecdsa.PrivateKey
+	PublicKey  []byte
 }
 
 func newAccount() (ecdsa.PrivateKey, []byte) {
@@ -95,11 +101,11 @@ func GetSuper(nodeconfig string, peersconfig string) (*SuperNode, error) {
 }
 
 //save node to file
-func (n *SuperNode) SaveToFile() {
+func (c *SuperNodeConfig) SaveToFile() {
 	var content bytes.Buffer
 	gob.RegisterName("Curve", elliptic.P256())
 	encoder := gob.NewEncoder(&content)
-	err := encoder.Encode(*n.Config)
+	err := encoder.Encode(*c)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -108,10 +114,30 @@ func (n *SuperNode) SaveToFile() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	keystone := &KeyStone{
+		PrivateKey: c.PrivateKey,
+		PublicKey:  c.PublicKey,
+	}
+
+	var keycontent bytes.Buffer
+	gob.RegisterName("Curve", elliptic.P256())
+	keyencoder := gob.NewEncoder(&keycontent)
+	err = keyencoder.Encode(*keystone)
+	if err != nil {
+		log.Panic(err)
+	}
+	keyfile := "keystone"
+	err = ioutil.WriteFile(keyfile, content.Bytes(), 0644)
+	if err != nil {
+		log.Panic(err)
+	}
+
 }
 
+
 func Signature(privatekey ecdsa.PrivateKey, hash []byte) ([]byte, error) {
-	rr, ss, err := ecdsa.Sign(rand.Reader, &privatekey, hash[:])
+	rr, ss, err := ecdsa.Sign(rand.Reader, &privatekey, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +148,38 @@ func Signature(privatekey ecdsa.PrivateKey, hash []byte) ([]byte, error) {
 }
 
 func VerifySig(pubKey []byte, signature []byte, message []byte) bool {
-	//TODO
-	return true
+	curve := elliptic.P256()
+	X := hashToInt(pubKey[:32], curve)
+	Y := hashToInt(pubKey[32:], curve)
+	clientPub := &ecdsa.PublicKey{
+		curve,
+		X,
+		Y,
+	}
+
+	r := signature[:32]
+	s := signature[32:]
+
+	rr := new(big.Int)
+	ss := new(big.Int)
+	rr.SetBytes(r)
+	ss.SetBytes(s)
+
+	var right = ecdsa.Verify(clientPub, message, rr, ss)
+	return right
+}
+
+func hashToInt(hash []byte, c elliptic.Curve) *big.Int {
+	orderBits := c.Params().N.BitLen()
+	orderBytes := (orderBits + 7) / 8
+	if len(hash) > orderBytes {
+		hash = hash[:orderBytes]
+	}
+
+	ret := new(big.Int).SetBytes(hash)
+	excess := len(hash)*8 - orderBits
+	if excess > 0 {
+		ret.Rsh(ret, uint(excess))
+	}
+	return ret
 }

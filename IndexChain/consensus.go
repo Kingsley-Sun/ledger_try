@@ -82,6 +82,7 @@ func (s *SuperNode) handle_csendblock(mess *Message,bc *Blockchain) {
 		return
 	}
 	if block.Verify(s.ConsensusPeer) == false {
+		fmt.Println("[*]Recieve an illegal Block block.Verify Failed")
 		return
 	}
 
