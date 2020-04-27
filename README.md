@@ -21,8 +21,8 @@
 * ```./configX.json``` is the SuperNode Config for each node. ```createsuper``` will use it
   + This file will be copied to the container in the ```./bushujiedian.sh```
 
-* ```./createNode.sh``` is the script used in the container , to create a SuperNode
-  + ```./SuperNode createsuper -config config.json```
+* ```./createNode.sh``` is the script used in the container , to teach how to create a SuperNode
+  + There are two conditions , Init the Node First Time, Or Init the Node with a keystone
   
 * ```./runNode.sh``` is the script used in the container , to start a SuperNode
   + ```./SuperNode runsuper -node InitialNode.config -peers Peers.json```
