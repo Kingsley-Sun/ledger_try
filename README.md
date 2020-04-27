@@ -7,6 +7,7 @@
      
 ## Preparation
 * Pull the image ledger-try
+  + ```docker pull kingsleystc/ledger-try:lateset```
 * run the script ```./dockerScripts/CreateDocker.sh```
   + This will create an isolate docker network at the subnet 192.168.1.0/24
   + Then Create 6 docker container where each one represent a SuperNode(peer) with specific container name and subnet
